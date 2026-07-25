@@ -18,4 +18,26 @@ main :: proc() {
 		kind := check_kind_for(target.url)
 		fmt.printfln("  [%d] %-10s %-45s -> %v", i, target.name, target.url, kind)
 	}
+
+	n := len(config.targets)
+	results := Results {
+		ups         = make([]bool, n),
+		latencies   = make([]f64, n),
+		expiry_days = make([]i32, n),
+	}
+	defer {
+		delete(results.ups)
+		delete(results.latencies)
+		delete(results.expiry_days)
+	}
+	for target, i in config.targets {
+		results.ups[i] = true
+		results.latencies[i] = 0.0
+		results.expiry_days[i] = check_kind_for(target.url) == .HTTPS ? 0 : NO_EXPIRY
+	}
+
+	metrics := metrics_to_string(config.targets, results)
+	defer delete(metrics)
+	fmt.println("\n--- /metrics (placeholder values) ---")
+	fmt.print(metrics)
 }
