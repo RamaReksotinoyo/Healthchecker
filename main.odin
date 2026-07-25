@@ -30,14 +30,11 @@ main :: proc() {
 		delete(results.latencies)
 		delete(results.expiry_days)
 	}
-	for target, i in config.targets {
-		results.ups[i] = true
-		results.latencies[i] = 0.0
-		results.expiry_days[i] = check_kind_for(target.url) == .HTTPS ? 0 : NO_EXPIRY
-	}
+	// Run one check cycle now. HTTPS targets are stubbed until the TLS path lands.
+	run_checks(config.targets, results)
 
 	metrics := metrics_to_string(config.targets, results)
 	defer delete(metrics)
-	fmt.println("\n--- /metrics (placeholder values) ---")
+	fmt.println("\n--- /metrics ---")
 	fmt.print(metrics)
 }

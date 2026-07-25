@@ -1,1 +1,15 @@
 CLAUDE.md
+
+/healthcheck
+
+*.o
+*.obj
+*.exe
+*.bin
+*.dylib
+*.so
+*.a
+
+*.dSYM/
+
+.DS_Store
