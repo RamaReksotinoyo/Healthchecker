@@ -68,7 +68,8 @@ write_metrics :: proc(b: ^strings.Builder, targets: []Target, r: Results) {
 // Builds the full exposition into a fresh buffer and 
 // returns it as a string. The caller owns the result (delete it).
 metrics_to_string :: proc(targets: []Target, r: Results, allocator := context.allocator) -> string {
-	b := strings.builder_make(allocator)
+	est := 512 + len(targets) * 160
+	b := strings.builder_make_len_cap(0, est, allocator)
 	write_metrics(&b, targets, r)
 	return strings.to_string(b)
 }
