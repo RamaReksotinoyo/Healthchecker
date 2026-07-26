@@ -15,7 +15,7 @@ benchmark_metrics :: proc(t: ^testing.T) {
 	}
 
 	targets := []Target {
-		{name = "blog", url = "https://ramareksotinoyo.my.id"},
+		{name = "blog", url = "https://example.com"},
 		{name = "grafana", url = "http://localhost:3000/api/health"},
 		{name = "minio", url = "http://localhost:9000/minio/health/live"},
 	}

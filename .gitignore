@@ -1,6 +1,7 @@
 CLAUDE.md
 
 /healthcheck
+/healtcheck
 
 *.o
 *.obj

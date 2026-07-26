@@ -2,7 +2,7 @@
   "targets": [
     {
       "name": "blog",
-      "url": "https://ramareksotinoyo.my.id"
+      "url": "https://example.com"
     },
     {
       "name": "grafana",

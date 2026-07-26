@@ -104,7 +104,7 @@ test_month_from_abbrev :: proc(t: ^testing.T) {
 
 @(test)
 test_host_only :: proc(t: ^testing.T) {
-	testing.expect_value(t, host_only("https://ramareksotinoyo.my.id"), "ramareksotinoyo.my.id")
+	testing.expect_value(t, host_only("https://example.com"), "example.com")
 	testing.expect_value(t, host_only("http://localhost:3000/api/health"), "localhost")
 	testing.expect_value(t, host_only("https://example.com:8443/path"), "example.com")
 }
