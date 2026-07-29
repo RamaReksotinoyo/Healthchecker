@@ -12,6 +12,12 @@ is_up :: proc(status_code: int) -> bool {
 	return status_code >= 200 && status_code < 300
 }
 
+// confirm_up debounces a raw result: down only after `threshold` failures in a row; any success clears the streak.
+confirm_up :: proc(streak: ^i32, raw_up: bool, threshold: i32) -> bool {
+	streak^ = 0 if raw_up else streak^ + 1
+	return streak^ < threshold
+}
+
 // Extracts the numeric code from an HTTP status line such as
 // "HTTP/1.1 200 OK". Returns ok=false if the line is malformed
 parse_status_code :: proc(status_line: string) -> (code: int, ok: bool) {

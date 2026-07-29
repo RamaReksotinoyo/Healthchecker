@@ -15,6 +15,31 @@ test_is_up :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_confirm_up :: proc(t: ^testing.T) {
+	streak: i32 = 0
+
+	// A single failure does not flip to down (threshold 3): stays up, streak climbs.
+	testing.expect(t, confirm_up(&streak, false, 3), "1st failure should still report up")
+	testing.expect_value(t, streak, i32(1))
+	testing.expect(t, confirm_up(&streak, false, 3), "2nd failure should still report up")
+	testing.expect_value(t, streak, i32(2))
+
+	// The 3rd consecutive failure crosses the threshold -> down.
+	testing.expect(t, !confirm_up(&streak, false, 3), "3rd failure should report down")
+	testing.expect_value(t, streak, i32(3))
+	testing.expect(t, !confirm_up(&streak, false, 3), "still down while failing")
+	testing.expect_value(t, streak, i32(4))
+
+	// A single success clears the streak and recovers immediately (recover fast).
+	testing.expect(t, confirm_up(&streak, true, 3), "one success should recover to up")
+	testing.expect_value(t, streak, i32(0))
+
+	// Threshold of 1 means any failure is immediately down (no debounce).
+	streak = 0
+	testing.expect(t, !confirm_up(&streak, false, 1), "threshold 1: first failure is down")
+}
+
+@(test)
 test_parse_status_code :: proc(t: ^testing.T) {
 	code, ok := parse_status_code("HTTP/1.1 200 OK")
 	testing.expect(t, ok, "valid line should parse")

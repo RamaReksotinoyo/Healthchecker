@@ -8,11 +8,12 @@ import "core:sync"
 import "core:thread"
 import "core:time"
 
-CONFIG_PATH      :: "config.json"
-INTERVAL_SECONDS :: 30
-LISTEN_ADDR      :: "0.0.0.0" // bind address; use 127.0.0.1 to restrict to localhost
-METRICS_PORT     :: 9101
-METRICS_PATH     :: "/metrics"
+CONFIG_PATH       :: "config.json"
+INTERVAL_SECONDS  :: 30
+FAILURE_THRESHOLD :: 3 // consecutive failures before a target is reported down (3 × 30s = up to 90s)
+LISTEN_ADDR       :: "0.0.0.0" // bind address; use 127.0.0.1 to restrict to localhost
+METRICS_PORT      :: 9101
+METRICS_PATH      :: "/metrics"
 
 // Cross-thread state: only `snapshot` is shared (guarded by `mu`); `results` is checker-only.
 Shared :: struct {
@@ -56,6 +57,9 @@ main :: proc() {
 
 // checker_loop runs one check cycle per interval, forever
 checker_loop :: proc(s: ^Shared) {
+	// Per-target consecutive-failure counters (checker-thread-only, like prev_ups).
+	fail_streak := make([]i32, len(s.targets))
+	defer delete(fail_streak)
 	// Track previous up/down per target so we log only when state changes.
 	prev_ups := make([]bool, len(s.targets))
 	defer delete(prev_ups)
@@ -63,6 +67,10 @@ checker_loop :: proc(s: ^Shared) {
 
 	for {
 		run_checks(s.targets, s.results)
+
+		for i in 0 ..< len(s.targets) {
+			s.results.ups[i] = confirm_up(&fail_streak[i], s.results.ups[i], FAILURE_THRESHOLD)
+		}
 
 		// Log each target's initial state once, then only transitions afterwards.
 		for target, i in s.targets {
