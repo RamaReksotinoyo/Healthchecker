@@ -8,12 +8,13 @@ import "core:sync"
 import "core:thread"
 import "core:time"
 
-CONFIG_PATH       :: "config.json"
-INTERVAL_SECONDS  :: 30
-FAILURE_THRESHOLD :: 3 // consecutive failures before a target is reported down (3 × 30s = up to 90s)
-LISTEN_ADDR       :: "0.0.0.0" // bind address; use 127.0.0.1 to restrict to localhost
-METRICS_PORT      :: 9101
-METRICS_PATH      :: "/metrics"
+CONFIG_PATH                :: "config.json"
+INTERVAL_SECONDS           :: 30
+FAILURE_THRESHOLD          :: 3
+DEGRADED_THRESHOLD_SECONDS :: 1.0 
+LISTEN_ADDR                :: "0.0.0.0" // bind address; use 127.0.0.1 to restrict to localhost
+METRICS_PORT               :: 9101
+METRICS_PATH               :: "/metrics"
 
 // Cross-thread state: only `snapshot` is shared (guarded by `mu`); `results` is checker-only.
 Shared :: struct {
@@ -34,11 +35,13 @@ main :: proc() {
 	n := len(config.targets)
 	results := Results {
 		ups         = make([]bool, n),
+		degraded    = make([]bool, n),
 		latencies   = make([]f64, n),
 		expiry_days = make([]i32, n),
 	}
 	defer {
 		delete(results.ups)
+		delete(results.degraded)
 		delete(results.latencies)
 		delete(results.expiry_days)
 	}
@@ -68,8 +71,10 @@ checker_loop :: proc(s: ^Shared) {
 	for {
 		run_checks(s.targets, s.results)
 
+		// Debounce up/down, then derive degraded from the confirmed up + latency.
 		for i in 0 ..< len(s.targets) {
 			s.results.ups[i] = confirm_up(&fail_streak[i], s.results.ups[i], FAILURE_THRESHOLD)
+			s.results.degraded[i] = is_degraded(s.results.ups[i], s.results.latencies[i], DEGRADED_THRESHOLD_SECONDS)
 		}
 
 		// Log each target's initial state once, then only transitions afterwards.

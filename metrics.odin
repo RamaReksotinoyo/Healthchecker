@@ -6,6 +6,7 @@ import "core:strings"
 
 Results :: struct {
 	ups:         []bool, // up=true / down=false
+	degraded:    []bool, // up but slow (latency over threshold)
 	latencies:   []f64,  // seconds
 	expiry_days: []i32,  // days until TLS cert expiry; NO_EXPIRY for HTTP targets
 }
@@ -14,6 +15,7 @@ Results :: struct {
 NO_EXPIRY :: i32(-1)
 
 METRIC_UP          :: "healthcheck_up"
+METRIC_DEGRADED    :: "healthcheck_degraded"
 METRIC_RESPONSE    :: "healthcheck_response_seconds"
 METRIC_CERT_EXPIRY :: "healthcheck_cert_expiry_days"
 
@@ -47,6 +49,13 @@ write_metrics :: proc(b: ^strings.Builder, targets: []Target, r: Results) {
 		strings.write_byte(b, '\n')
 	}
 
+	write_help_type(b, METRIC_DEGRADED, "Whether the target is up but slow (1) or not (0).")
+	for target, i in targets {
+		write_label_line(b, METRIC_DEGRADED, target.name)
+		strings.write_string(b, r.degraded[i] ? "1" : "0")
+		strings.write_byte(b, '\n')
+	}
+
 	write_help_type(b, METRIC_RESPONSE, "Response time of the last check in seconds.")
 	for target, i in targets {
 		write_label_line(b, METRIC_RESPONSE, target.name)
@@ -68,7 +77,7 @@ write_metrics :: proc(b: ^strings.Builder, targets: []Target, r: Results) {
 // Builds the full exposition into a fresh buffer and 
 // returns it as a string. The caller owns the result (delete it).
 metrics_to_string :: proc(targets: []Target, r: Results, allocator := context.allocator) -> string {
-	est := 512 + len(targets) * 160
+	est := 512 + len(targets) * 200
 	b := strings.builder_make_len_cap(0, est, allocator)
 	write_metrics(&b, targets, r)
 	return strings.to_string(b)

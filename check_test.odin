@@ -40,6 +40,18 @@ test_confirm_up :: proc(t: ^testing.T) {
 }
 
 @(test)
+test_is_degraded :: proc(t: ^testing.T) {
+	// Up and slow -> degraded.
+	testing.expect(t, is_degraded(true, 1.5, 1.0), "up + slow should be degraded")
+	// Up and fast -> not degraded.
+	testing.expect(t, !is_degraded(true, 0.2, 1.0), "up + fast should not be degraded")
+	// Exactly at the threshold is not over it -> not degraded.
+	testing.expect(t, !is_degraded(true, 1.0, 1.0), "latency equal to threshold is not degraded")
+	// A down target is never degraded, even with a high (e.g. slow 5xx) latency.
+	testing.expect(t, !is_degraded(false, 3.0, 1.0), "down target is never degraded")
+}
+
+@(test)
 test_parse_status_code :: proc(t: ^testing.T) {
 	code, ok := parse_status_code("HTTP/1.1 200 OK")
 	testing.expect(t, ok, "valid line should parse")

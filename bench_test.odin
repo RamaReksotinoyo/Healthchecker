@@ -21,6 +21,7 @@ benchmark_metrics :: proc(t: ^testing.T) {
 	}
 	results := Results {
 		ups         = []bool{true, false, false},
+		degraded    = []bool{true, false, false},
 		latencies   = []f64{2.4, 0, 0},
 		expiry_days = []i32{46, NO_EXPIRY, NO_EXPIRY},
 	}

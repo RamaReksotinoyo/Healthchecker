@@ -18,6 +18,11 @@ confirm_up :: proc(streak: ^i32, raw_up: bool, threshold: i32) -> bool {
 	return streak^ < threshold
 }
 
+// is_degraded reports whether an up target is slow (latency over threshold); a down target is never degraded.
+is_degraded :: proc(up: bool, latency_seconds, threshold_seconds: f64) -> bool {
+	return up && latency_seconds > threshold_seconds
+}
+
 // Extracts the numeric code from an HTTP status line such as
 // "HTTP/1.1 200 OK". Returns ok=false if the line is malformed
 parse_status_code :: proc(status_line: string) -> (code: int, ok: bool) {
