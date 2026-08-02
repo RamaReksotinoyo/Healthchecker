@@ -16,5 +16,12 @@ Prometheus/Grafana stack.
   each HTTPS target.
 - **`/metrics` endpoint** — results exposed in Prometheus text format.
 
+## Demo
+
+Response time per target, visualized in Grafana from the scraped metrics using
+the query `healthcheck_response_seconds * 1000` (milliseconds):
+
+![Per-target response time in Grafana](assets/latency.png)
+
 > **Status:** early development. Config loading is implemented and tested; the
 > check loop, `/metrics` server, and TLS check are being built incrementally.
